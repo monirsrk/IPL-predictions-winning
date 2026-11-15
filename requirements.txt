@@ -1,4 +1,4 @@
 streamlit>=1.30
 pandas
 numpy
-pip install scikit-learn==1.6.1
+scikit-learn==1.6.1
