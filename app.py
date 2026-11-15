@@ -43,17 +43,27 @@ st.markdown("""
 # ---------- মডেল লোড ----------
 @st.cache_resource
 def load_model():
-    path = Path(__file__).parent / "pipe.pkl"
-    if not path.exists():
-        return None
-    with open(path, "rb") as f:
-        return pickle.load(f)
+    base = Path(__file__).parent
+    files = sorted(base.glob("*.pkl"))
+    if not files:
+        return None, "NO_FILE"
+    try:
+        with open(files[0], "rb") as f:
+            return pickle.load(f), None
+    except Exception as e:  # ভার্সন মিসম্যাচ ইত্যাদি
+        return None, f"{type(e).__name__}: {e}"
 
 
-pipe = load_model()
+pipe, load_error = load_model()
 if pipe is None:
-    st.error("`pipe.pkl` পাওয়া যায়নি। আগে `python train_model.py` চালান "
-             "(অথবা notebook থেকে pipe.pkl save করে এই ফোল্ডারে রাখুন)।")
+    if load_error == "NO_FILE":
+        st.error("কোনো `.pkl` ফাইল পাওয়া যায়নি। `pipe.pkl` ফাইলটা `app.py`-র পাশের ফোল্ডারে রাখুন।")
+        st.write("এই ফোল্ডারে আছে:", sorted(p.name for p in Path(__file__).parent.iterdir()))
+    else:
+        import sklearn
+        st.error("মডেল লোড করা যায়নি। সম্ভবত scikit-learn ভার্সন মিলছে না।")
+        st.write("বর্তমান scikit-learn ভার্সন:", sklearn.__version__, "(দরকার: 1.6.1)")
+        st.code(load_error)
     st.stop()
 
 # টিম ও শহরের তালিকা সরাসরি মডেল থেকে নেওয়া হচ্ছে, তাই নাম কখনো মিসম্যাচ হবে না
